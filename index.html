@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceAI - Gestão Financeira Inteligente</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="loader-wrapper" id="loader">
+        <div class="button is-loading is-large is-white"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="glass-card">
+            <div class="level is-mobile">
+                <div class="level-left">
+                    <div class="level-item">
+                        <h1 class="title is-3 has-text-primary">
+                            <i class="fas fa-brain"></i> FinanceAI
+                        </h1>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <div class="level-item">
+                        <button class="button is-primary" onclick="openModal('addModal')">
+                            <span class="icon"><i class="fas fa-plus"></i></span>
+                            <span>Nova Transação</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="columns is-multiline">
+            <div class="column is-3-desktop is-6-tablet">
+                <div class="stat-card income">
+                    <i class="fas fa-arrow-up stat-icon"></i>
+                    <div class="stat-label">Receitas</div>
+                    <div class="stat-value" id="totalIncome">R$ 0,00</div>
+                    <div class="stat-label">Este mês</div>
+                </div>
+            </div>
+            <div class="column is-3-desktop is-6-tablet">
+                <div class="stat-card expense">
+                    <i class="fas fa-arrow-down stat-icon"></i>
+                    <div class="stat-label">Despesas</div>
+                    <div class="stat-value" id="totalExpense">R$ 0,00</div>
+                    <div class="stat-label">Este mês</div>
+                </div>
+            </div>
+            <div class="column is-3-desktop is-6-tablet">
+                <div class="stat-card balance">
+                    <i class="fas fa-wallet stat-icon"></i>
+                    <div class="stat-label">Saldo</div>
+                    <div class="stat-value" id="balance">R$ 0,00</div>
+                    <div class="stat-label">Atual</div>
+                </div>
+            </div>
+            <div class="column is-3-desktop is-6-tablet">
+                <div class="stat-card savings">
+                    <i class="fas fa-piggy-bank stat-icon"></i>
+                    <div class="stat-label">Economia</div>
+                    <div class="stat-value" id="savings">0%</div>
+                    <div class="stat-label">Taxa de economia</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="glass-card">
+            <h2 class="title is-4">
+                <i class="fas fa-robot"></i> Insights com IA
+            </h2>
+            <div id="aiInsights"></div>
+        </div>
+
+        <!-- Payment Methods Stats -->
+        <div class="glass-card">
+            <h2 class="title is-4">
+                <i class="fas fa-credit-card"></i> Formas de Pagamento
+            </h2>
+            <div class="columns is-multiline" id="paymentMethodsStats">
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card">
+            <div class="field is-grouped is-grouped-multiline is-grouped-centered">
+                <p class="control">
+                    <button class="button is-info filter-btn is-active" onclick="filterByPeriod('all')" data-period="all">
+                        <span class="icon"><i class="fas fa-infinity"></i></span>
+                        <span>Todos</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-info filter-btn" onclick="filterByPeriod('today')" data-period="today">
+                        <span class="icon"><i class="fas fa-calendar-day"></i></span>
+                        <span>Hoje</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-info filter-btn" onclick="filterByPeriod('week')" data-period="week">
+                        <span class="icon"><i class="fas fa-calendar-week"></i></span>
+                        <span>Semana</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-info filter-btn" onclick="filterByPeriod('month')" data-period="month">
+                        <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                        <span>Mês</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-info filter-btn" onclick="filterByPeriod('year')" data-period="year">
+                        <span class="icon"><i class="fas fa-calendar"></i></span>
+                        <span>Ano</span>
+                    </button>
+                </p>
+            </div>
+
+            <div class="field is-grouped is-grouped-multiline is-grouped-centered mt-4">
+                <p class="control">
+                    <button class="button is-success action-btn" onclick="exportToExcel()">
+                        <span class="icon"><i class="fas fa-file-excel"></i></span>
+                        <span>Excel</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-link action-btn" onclick="exportToCSV()">
+                        <span class="icon"><i class="fas fa-file-csv"></i></span>
+                        <span>CSV</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-danger action-btn" onclick="exportToPDF()">
+                        <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                        <span>PDF</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button is-warning action-btn" onclick="document.getElementById('importFile').click()">
+                        <span class="icon"><i class="fas fa-file-import"></i></span>
+                        <span>Importar</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".xlsx,.csv" style="display: none;" onchange="importData(event)">
+                </p>
+            </div>
+        </div>
+
+        <!-- Chart and Transactions -->
+        <div class="columns">
+            <div class="column is-6">
+                <div class="glass-card">
+                    <h2 class="title is-4">
+                        <i class="fas fa-chart-pie"></i> Despesas por Categoria
+                    </h2>
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-6">
+                <div class="glass-card">
+                    <h2 class="title is-4">
+                        <i class="fas fa-list"></i> Transações Recentes
+                    </h2>
+                    
+                    <div class="select-all-container">
+                        <div class="level is-mobile">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <label class="checkbox">
+                                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                        <strong class="ml-2">Selecionar Todas</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <div class="bulk-actions" id="bulkActions">
+                                        <button class="button is-danger is-small" onclick="deleteSelected()">
+                                            <span class="icon"><i class="fas fa-trash"></i></span>
+                                            <span>Excluir Selecionadas</span>
+                                        </button>
+                                        <span class="tag is-info is-medium" id="selectedCount">0 selecionadas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="transactionsList" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-background" onclick="closeModal('addModal')"></div>
+        <div class="modal-card">
+            <header class="modal-card-head has-background-primary">
+                <p class="modal-card-title has-text-white">Nova Transação</p>
+                <button class="delete" onclick="closeModal('addModal')"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="field">
+                    <label class="label">Tipo</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="transactionType">
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Descrição</label>
+                    <div class="control">
+                        <input class="input" type="text" id="description" placeholder="Ex: Salário, Aluguel...">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Categoria</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="category">
+                                <option value="Sangria">💸 Sangria</option>
+                                <option value="Caixa">💰 Caixa</option>
+                                <option value="Saldo">📊 Saldo</option>
+                                <option value="Alimentação">🍔 Alimentação</option>
+                                <option value="Transporte">🚗 Transporte</option>
+                                <option value="Moradia">🏠 Moradia</option>
+                                <option value="Saúde">🏥 Saúde</option>
+                                <option value="Educação">📚 Educação</option>
+                                <option value="Lazer">🎮 Lazer</option>
+                                <option value="Salário">💵 Salário</option>
+                                <option value="Investimentos">📈 Investimentos</option>
+                                <option value="Outros">📦 Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Forma de Pagamento</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="paymentMethod">
+                                <option value="dinheiro">💵 Dinheiro</option>
+                                <option value="pix">📱 PIX</option>
+                                <option value="credito">💳 Crédito</option>
+                                <option value="debito">💳 Débito</option>
+                                <option value="crediario">📝 Crediário</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Valor</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" id="amount" placeholder="0.00" step="0.01">
+                        <span class="icon is-left">R$</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Data</label>
+                    <div class="control">
+                        <input class="input" type="date" id="date">
+                    </div>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success" onclick="addTransaction()">Salvar</button>
+                <button class="button" onclick="closeModal('addModal')">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-background" onclick="closeModal('editModal')"></div>
+        <div class="modal-card">
+            <header class="modal-card-head has-background-info">
+                <p class="modal-card-title has-text-white">Editar Transação</p>
+                <button class="delete" onclick="closeModal('editModal')"></button>
+            </header>
+            <section class="modal-card-body">
+                <input type="hidden" id="editId">
+                <div class="field">
+                    <label class="label">Tipo</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="editType">
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Descrição</label>
+                    <div class="control">
+                        <input class="input" type="text" id="editDescription">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Categoria</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="editCategory">
+                                <option value="Sangria">💸 Sangria</option>
+                                <option value="Caixa">💰 Caixa</option>
+                                <option value="Saldo">📊 Saldo</option>
+                                <option value="Alimentação">🍔 Alimentação</option>
+                                <option value="Transporte">🚗 Transporte</option>
+                                <option value="Moradia">🏠 Moradia</option>
+                                <option value="Saúde">🏥 Saúde</option>
+                                <option value="Educação">📚 Educação</option>
+                                <option value="Lazer">🎮 Lazer</option>
+                                <option value="Salário">💵 Salário</option>
+                                <option value="Investimentos">📈 Investimentos</option>
+                                <option value="Outros">📦 Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Forma de Pagamento</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="editPaymentMethod">
+                                <option value="dinheiro">💵 Dinheiro</option>
+                                <option value="pix">📱 PIX</option>
+                                <option value="credito">💳 Crédito</option>
+                                <option value="debito">💳 Débito</option>
+                                <option value="crediario">📝 Crediário</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Valor</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" id="editAmount" step="0.01">
+                        <span class="icon is-left">R$</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Data</label>
+                    <div class="control">
+                        <input class="input" type="date" id="editDate">
+                    </div>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-info" onclick="saveEdit()">Atualizar</button>
+                <button class="button" onclick="closeModal('editModal')">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
