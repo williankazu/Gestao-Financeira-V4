@@ -74,6 +74,43 @@
             </div>
         </div>
 
+        <!-- Historical Summary -->
+        <div class="glass-card">
+            <h2 class="title is-4">
+                <i class="fas fa-history"></i> Resumo Histórico
+            </h2>
+            <div class="columns is-multiline" id="historicalSummary">
+                <div class="column is-3-desktop is-6-tablet">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('yesterday')" style="cursor: pointer; transition: transform 0.3s;">
+                        <p class="heading">Ontem</p>
+                        <p class="title is-5" id="yesterdayBalance">R$ 0,00</p>
+                        <p class="subtitle is-7 has-text-grey" id="yesterdayTransactions">0 transações</p>
+                    </div>
+                </div>
+                <div class="column is-3-desktop is-6-tablet">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastWeek')" style="cursor: pointer; transition: transform 0.3s;">
+                        <p class="heading">Semana Passada</p>
+                        <p class="title is-5" id="lastWeekBalance">R$ 0,00</p>
+                        <p class="subtitle is-7 has-text-grey" id="lastWeekTransactions">0 transações</p>
+                    </div>
+                </div>
+                <div class="column is-3-desktop is-6-tablet">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastMonth')" style="cursor: pointer; transition: transform 0.3s;">
+                        <p class="heading">Mês Passado</p>
+                        <p class="title is-5" id="lastMonthBalance">R$ 0,00</p>
+                        <p class="subtitle is-7 has-text-grey" id="lastMonthTransactions">0 transações</p>
+                    </div>
+                </div>
+                <div class="column is-3-desktop is-6-tablet">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastYear')" style="cursor: pointer; transition: transform 0.3s;">
+                        <p class="heading">Ano Passado</p>
+                        <p class="title is-5" id="lastYearBalance">R$ 0,00</p>
+                        <p class="subtitle is-7 has-text-grey" id="lastYearTransactions">0 transações</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- AI Insights -->
         <div class="glass-card">
             <h2 class="title is-4">
@@ -132,6 +169,131 @@
 
         <!-- Filters -->
         <div class="glass-card">
+            <h3 class="title is-5 mb-4">
+                <i class="fas fa-filter"></i> Filtros de Período
+            </h3>
+            
+            <!-- Current Periods -->
+            <div class="mb-4">
+                <div class="has-text-centered mb-3">
+                    <span class="tag is-info is-medium">
+                        <span class="icon"><i class="fas fa-calendar-check"></i></span>
+                        <span>Períodos Atuais</span>
+                    </span>
+                </div>
+                <div class="field is-grouped is-grouped-multiline is-grouped-centered">
+                    <p class="control">
+                        <button class="button is-info filter-btn is-active" onclick="filterByPeriod('all')" data-period="all">
+                            <span class="icon"><i class="fas fa-infinity"></i></span>
+                            <span>Todos</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-info filter-btn" onclick="filterByPeriod('today')" data-period="today">
+                            <span class="icon"><i class="fas fa-calendar-day"></i></span>
+                            <span>Hoje</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-info filter-btn" onclick="filterByPeriod('week')" data-period="week">
+                            <span class="icon"><i class="fas fa-calendar-week"></i></span>
+                            <span>Esta Semana</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-info filter-btn" onclick="filterByPeriod('month')" data-period="month">
+                            <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                            <span>Este Mês</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-info filter-btn" onclick="filterByPeriod('year')" data-period="year">
+                            <span class="icon"><i class="fas fa-calendar"></i></span>
+                            <span>Este Ano</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <hr class="has-background-grey-lighter">
+
+            <!-- Previous Periods -->
+            <div class="mb-3">
+                <div class="has-text-centered mb-3">
+                    <span class="tag is-link is-medium">
+                        <span class="icon"><i class="fas fa-history"></i></span>
+                        <span>Períodos Anteriores</span>
+                    </span>
+                </div>
+                <div class="field is-grouped is-grouped-multiline is-grouped-centered">
+                    <p class="control">
+                        <button class="button is-link filter-btn" onclick="filterByPeriod('yesterday')" data-period="yesterday">
+                            <span class="icon"><i class="fas fa-chevron-left"></i></span>
+                            <span>Ontem</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-link filter-btn" onclick="filterByPeriod('lastWeek')" data-period="lastWeek">
+                            <span class="icon"><i class="fas fa-chevron-left"></i></span>
+                            <span>Semana Passada</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-link filter-btn" onclick="filterByPeriod('lastMonth')" data-period="lastMonth">
+                            <span class="icon"><i class="fas fa-chevron-left"></i></span>
+                            <span>Mês Passado</span>
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-link filter-btn" onclick="filterByPeriod('lastYear')" data-period="lastYear">
+                            <span class="icon"><i class="fas fa-chevron-left"></i></span>
+                            <span>Ano Passado</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Period Comparison -->
+            <div id="periodComparison" style="display: none;" class="mt-4">
+                <div class="notification is-info is-light">
+                    <div class="columns is-mobile is-multiline">
+                        <div class="column is-12">
+                            <h4 class="title is-6 mb-2">
+                                <i class="fas fa-chart-line"></i> Comparação com Período Anterior
+                            </h4>
+                        </div>
+                        <div class="column is-4">
+                            <div class="has-text-centered">
+                                <p class="heading">Receitas</p>
+                                <p class="title is-6" id="incomeComparison">-</p>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="has-text-centered">
+                                <p class="heading">Despesas</p>
+                                <p class="title is-6" id="expenseComparison">-</p>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="has-text-centered">
+                                <p class="heading">Saldo</p>
+                                <p class="title is-6" id="balanceComparison">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="has-background-grey-lighter">
+
+            <div class="has-text-centered mb-3 mt-4">
+                <span class="tag is-success is-medium">
+                    <span class="icon"><i class="fas fa-file-export"></i></span>
+                    <span>Exportar / Importar</span>
+                </span>
+            </div>
+
             <div class="field is-grouped is-grouped-multiline is-grouped-centered">
                 <p class="control">
                     <button class="button is-info filter-btn is-active" onclick="filterByPeriod('all')" data-period="all">

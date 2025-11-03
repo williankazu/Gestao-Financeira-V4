@@ -143,6 +143,20 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
+        .filter-btn.is-link {
+            background-color: #b86bff;
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .filter-btn.is-link:hover {
+            background-color: #a456e8;
+        }
+
+        .filter-btn.is-link.is-active {
+            background-color: #9042d4;
+        }
+
         .action-btn {
             margin: 5px;
         }
@@ -167,6 +181,37 @@
 
         .payment-stats-box:hover {
             transform: translateY(-3px);
+        }
+
+        .historical-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-section-divider {
+            border-top: 2px solid #f0f0f0;
+            margin: 20px 0;
+        }
+
+        .filter-section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .filter-btn span:not(.icon) {
+                display: none;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.75rem;
+            }
         }
 
         .transaction-checkbox {

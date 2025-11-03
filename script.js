@@ -224,6 +224,169 @@
             loadTransactions();
             updateStats();
             updateChart();
+            
+            // Show comparison for specific periods
+            if (['today', 'yesterday', 'week', 'lastWeek', 'month', 'lastMonth', 'year', 'lastYear'].includes(period)) {
+                calculatePeriodComparison(period);
+            } else {
+                document.getElementById('periodComparison').style.display = 'none';
+            }
+        }
+
+        // Calculate Period Comparison
+        function calculatePeriodComparison(period) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            let currentPeriodStart, currentPeriodEnd, previousPeriodStart, previousPeriodEnd;
+            let periodName = '';
+
+            switch(period) {
+                case 'today':
+                    currentPeriodStart = new Date(today);
+                    currentPeriodEnd = new Date(today);
+                    currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 1);
+                    previousPeriodStart = new Date(today);
+                    previousPeriodStart.setDate(previousPeriodStart.getDate() - 1);
+                    previousPeriodEnd = new Date(today);
+                    periodName = 'ontem';
+                    break;
+
+                case 'yesterday':
+                    currentPeriodStart = new Date(today);
+                    currentPeriodStart.setDate(currentPeriodStart.getDate() - 1);
+                    currentPeriodEnd = new Date(today);
+                    previousPeriodStart = new Date(today);
+                    previousPeriodStart.setDate(previousPeriodStart.getDate() - 2);
+                    previousPeriodEnd = new Date(today);
+                    previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 1);
+                    periodName = 'anteontem';
+                    break;
+
+                case 'week':
+                    currentPeriodStart = new Date(today);
+                    currentPeriodStart.setDate(today.getDate() - today.getDay());
+                    currentPeriodEnd = new Date(today);
+                    currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 1);
+                    previousPeriodStart = new Date(currentPeriodStart);
+                    previousPeriodStart.setDate(previousPeriodStart.getDate() - 7);
+                    previousPeriodEnd = new Date(currentPeriodStart);
+                    periodName = 'semana passada';
+                    break;
+
+                case 'lastWeek':
+                    currentPeriodEnd = new Date(today);
+                    currentPeriodEnd.setDate(today.getDate() - today.getDay());
+                    currentPeriodStart = new Date(currentPeriodEnd);
+                    currentPeriodStart.setDate(currentPeriodStart.getDate() - 6);
+                    previousPeriodStart = new Date(currentPeriodStart);
+                    previousPeriodStart.setDate(previousPeriodStart.getDate() - 7);
+                    previousPeriodEnd = new Date(currentPeriodEnd);
+                    previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 7);
+                    periodName = 'duas semanas atrás';
+                    break;
+
+                case 'month':
+                    currentPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    currentPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 1);
+                    previousPeriodStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    previousPeriodEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+                    periodName = 'mês passado';
+                    break;
+
+                case 'lastMonth':
+                    const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+                    const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+                    currentPeriodStart = new Date(lastMonthYear, lastMonth, 1);
+                    currentPeriodEnd = new Date(lastMonthYear, lastMonth + 1, 1);
+                    previousPeriodStart = new Date(lastMonthYear, lastMonth - 1, 1);
+                    previousPeriodEnd = new Date(lastMonthYear, lastMonth, 1);
+                    periodName = 'dois meses atrás';
+                    break;
+
+                case 'year':
+                    currentPeriodStart = new Date(now.getFullYear(), 0, 1);
+                    currentPeriodEnd = new Date(now.getFullYear() + 1, 0, 1);
+                    previousPeriodStart = new Date(now.getFullYear() - 1, 0, 1);
+                    previousPeriodEnd = new Date(now.getFullYear(), 0, 1);
+                    periodName = 'ano passado';
+                    break;
+
+                case 'lastYear':
+                    currentPeriodStart = new Date(now.getFullYear() - 1, 0, 1);
+                    currentPeriodEnd = new Date(now.getFullYear(), 0, 1);
+                    previousPeriodStart = new Date(now.getFullYear() - 2, 0, 1);
+                    previousPeriodEnd = new Date(now.getFullYear() - 1, 0, 1);
+                    periodName = 'dois anos atrás';
+                    break;
+            }
+
+            // Calculate current period totals
+            const currentTransactions = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date >= currentPeriodStart && date < currentPeriodEnd;
+            });
+
+            const currentIncome = currentTransactions
+                .filter(t => t.type === 'income' || t.type === 'entrada')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const currentExpense = currentTransactions
+                .filter(t => t.type === 'expense' || t.type === 'saida')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const currentBalance = currentIncome - currentExpense;
+
+            // Calculate previous period totals
+            const previousTransactions = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date >= previousPeriodStart && date < previousPeriodEnd;
+            });
+
+            const previousIncome = previousTransactions
+                .filter(t => t.type === 'income' || t.type === 'entrada')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const previousExpense = previousTransactions
+                .filter(t => t.type === 'expense' || t.type === 'saida')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const previousBalance = previousIncome - previousExpense;
+
+            // Calculate differences
+            const incomeDiff = currentIncome - previousIncome;
+            const expenseDiff = currentExpense - previousExpense;
+            const balanceDiff = currentBalance - previousBalance;
+
+            // Calculate percentages
+            const incomePercent = previousIncome > 0 ? ((incomeDiff / previousIncome) * 100) : 0;
+            const expensePercent = previousExpense > 0 ? ((expenseDiff / previousExpense) * 100) : 0;
+            const balancePercent = previousBalance !== 0 ? ((balanceDiff / Math.abs(previousBalance)) * 100) : 0;
+
+            // Update UI
+            const formatComparison = (diff, percent, isExpense = false) => {
+                const sign = diff >= 0 ? '+' : '';
+                const color = isExpense 
+                    ? (diff > 0 ? 'has-text-danger' : 'has-text-success')
+                    : (diff >= 0 ? 'has-text-success' : 'has-text-danger');
+                const arrow = diff >= 0 ? '↑' : '↓';
+                
+                return `
+                    <span class="${color}">
+                        ${sign}R$ ${Math.abs(diff).toFixed(2)} 
+                        (${arrow} ${Math.abs(percent).toFixed(1)}%)
+                    </span>
+                    <br>
+                    <small class="has-text-grey">vs ${periodName}</small>
+                `;
+            };
+
+            document.getElementById('incomeComparison').innerHTML = formatComparison(incomeDiff, incomePercent);
+            document.getElementById('expenseComparison').innerHTML = formatComparison(expenseDiff, expensePercent, true);
+            document.getElementById('balanceComparison').innerHTML = formatComparison(balanceDiff, balancePercent);
+
+            document.getElementById('periodComparison').style.display = 'block';
         }
 
         function getFilteredTransactions() {
@@ -238,15 +401,40 @@
                 switch(currentFilter) {
                     case 'today':
                         return transactionDate >= today && transactionDate < tomorrow;
+                    
+                    case 'yesterday':
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return transactionDate >= yesterday && transactionDate < today;
+                    
                     case 'week':
-                        const weekAgo = new Date(today);
-                        weekAgo.setDate(weekAgo.getDate() - 7);
-                        return transactionDate >= weekAgo;
+                        const weekStart = new Date(today);
+                        weekStart.setDate(today.getDate() - today.getDay()); // Domingo
+                        return transactionDate >= weekStart && transactionDate <= today;
+                    
+                    case 'lastWeek':
+                        const lastWeekEnd = new Date(today);
+                        lastWeekEnd.setDate(today.getDate() - today.getDay() - 1); // Sábado da semana passada
+                        const lastWeekStart = new Date(lastWeekEnd);
+                        lastWeekStart.setDate(lastWeekEnd.getDate() - 6); // Domingo da semana passada
+                        return transactionDate >= lastWeekStart && transactionDate <= lastWeekEnd;
+                    
                     case 'month':
                         return transactionDate.getMonth() === now.getMonth() && 
                                transactionDate.getFullYear() === now.getFullYear();
+                    
+                    case 'lastMonth':
+                        const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+                        const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+                        return transactionDate.getMonth() === lastMonth && 
+                               transactionDate.getFullYear() === lastMonthYear;
+                    
                     case 'year':
                         return transactionDate.getFullYear() === now.getFullYear();
+                    
+                    case 'lastYear':
+                        return transactionDate.getFullYear() === now.getFullYear() - 1;
+                    
                     default:
                         return true;
                 }
@@ -359,6 +547,76 @@
             document.getElementById('savings').textContent = `${savingsRate.toFixed(1)}%`;
 
             updatePaymentMethodsStats();
+            updateHistoricalSummary();
+        }
+
+        // Update Historical Summary
+        function updateHistoricalSummary() {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            // Yesterday
+            const yesterdayStart = new Date(today);
+            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+            const yesterdayEnd = new Date(today);
+            const yesterdayTrans = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date >= yesterdayStart && date < yesterdayEnd;
+            });
+            const yesterdayIncome = yesterdayTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const yesterdayExpense = yesterdayTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const yesterdayBalance = yesterdayIncome - yesterdayExpense;
+
+            // Last Week
+            const lastWeekEnd = new Date(today);
+            lastWeekEnd.setDate(today.getDate() - today.getDay());
+            const lastWeekStart = new Date(lastWeekEnd);
+            lastWeekStart.setDate(lastWeekStart.getDate() - 6);
+            const lastWeekTrans = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date >= lastWeekStart && date < lastWeekEnd;
+            });
+            const lastWeekIncome = lastWeekTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const lastWeekExpense = lastWeekTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const lastWeekBalance = lastWeekIncome - lastWeekExpense;
+
+            // Last Month
+            const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+            const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+            const lastMonthTrans = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
+            });
+            const lastMonthIncome = lastMonthTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const lastMonthExpense = lastMonthTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const lastMonthBalance = lastMonthIncome - lastMonthExpense;
+
+            // Last Year
+            const lastYearTrans = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date.getFullYear() === now.getFullYear() - 1;
+            });
+            const lastYearIncome = lastYearTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const lastYearExpense = lastYearTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const lastYearBalance = lastYearIncome - lastYearExpense;
+
+            // Update UI
+            const formatBalance = (balance) => {
+                const color = balance >= 0 ? 'has-text-success' : 'has-text-danger';
+                return `<span class="${color}">${balance >= 0 ? '+' : ''}R$ ${balance.toFixed(2)}</span>`;
+            };
+
+            document.getElementById('yesterdayBalance').innerHTML = formatBalance(yesterdayBalance);
+            document.getElementById('yesterdayTransactions').textContent = `${yesterdayTrans.length} transações`;
+
+            document.getElementById('lastWeekBalance').innerHTML = formatBalance(lastWeekBalance);
+            document.getElementById('lastWeekTransactions').textContent = `${lastWeekTrans.length} transações`;
+
+            document.getElementById('lastMonthBalance').innerHTML = formatBalance(lastMonthBalance);
+            document.getElementById('lastMonthTransactions').textContent = `${lastMonthTrans.length} transações`;
+
+            document.getElementById('lastYearBalance').innerHTML = formatBalance(lastYearBalance);
+            document.getElementById('lastYearTransactions').textContent = `${lastYearTrans.length} transações`;
         }
 
         // Update Payment Methods Stats
