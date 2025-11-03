@@ -3,6 +3,9 @@
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let currentFilter = 'all';
         let pieChart = null;
+        let currentCalendarMonth = new Date().getMonth();
+        let currentCalendarYear = new Date().getFullYear();
+        let selectedDay = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -11,6 +14,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
         });
 
         // Modal Functions
@@ -60,6 +64,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
 
             showNotification('Transação adicionada com sucesso!', 'is-success');
         }
@@ -102,6 +107,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
 
             showNotification('Transação atualizada com sucesso!', 'is-info');
         }
@@ -117,6 +123,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
 
             showNotification('Transação excluída com sucesso!', 'is-danger');
         }
@@ -199,6 +206,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
             
             showNotification(`${count} transação${count !== 1 ? 'ões' : ''} excluída${count !== 1 ? 's' : ''} com sucesso!`, 'is-success');
         }
@@ -221,13 +229,15 @@
         function getFilteredTransactions() {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
 
             return transactions.filter(t => {
-                const transactionDate = new Date(t.date);
+                const transactionDate = new Date(t.date + 'T00:00:00');
 
                 switch(currentFilter) {
                     case 'today':
-                        return transactionDate >= today;
+                        return transactionDate >= today && transactionDate < tomorrow;
                     case 'week':
                         const weekAgo = new Date(today);
                         weekAgo.setDate(weekAgo.getDate() - 7);
@@ -561,6 +571,242 @@
             `);
 
             document.getElementById('aiInsights').innerHTML = insights.join('');
+        }
+
+        // Calendar Functions
+        function renderCalendar() {
+            const monthNames = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            // Update header
+            document.getElementById('calendarMonthYear').textContent = 
+                `${monthNames[currentCalendarMonth]} ${currentCalendarYear}`;
+
+            // Get first day of month and number of days
+            const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+            const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            // Get previous month's last days
+            const prevMonthLastDay = new Date(currentCalendarYear, currentCalendarMonth, 0);
+            const prevMonthDays = prevMonthLastDay.getDate();
+
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            // Get transactions for the month
+            const monthTransactions = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date.getMonth() === currentCalendarMonth && 
+                       date.getFullYear() === currentCalendarYear;
+            });
+
+            // Group transactions by day
+            const transactionsByDay = {};
+            monthTransactions.forEach(t => {
+                const day = new Date(t.date + 'T00:00:00').getDate();
+                if (!transactionsByDay[day]) {
+                    transactionsByDay[day] = { income: 0, expense: 0, transactions: [] };
+                }
+                
+                const isIncome = t.type === 'income' || t.type === 'entrada';
+                if (isIncome) {
+                    transactionsByDay[day].income += t.amount;
+                } else {
+                    transactionsByDay[day].expense += t.amount;
+                }
+                transactionsByDay[day].transactions.push(t);
+            });
+
+            // Add previous month's days
+            for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day other-month';
+                dayDiv.innerHTML = `<span class="calendar-day-number">${day}</span>`;
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // Add current month's days
+            const today = new Date();
+            const isCurrentMonth = currentCalendarMonth === today.getMonth() && 
+                                   currentCalendarYear === today.getFullYear();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                
+                // Check if it's today
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayDiv.classList.add('today');
+                }
+
+                // Check if it's selected
+                if (selectedDay && selectedDay.day === day && 
+                    selectedDay.month === currentCalendarMonth && 
+                    selectedDay.year === currentCalendarYear) {
+                    dayDiv.classList.add('selected');
+                }
+
+                // Add transaction indicators
+                if (transactionsByDay[day]) {
+                    const data = transactionsByDay[day];
+                    const hasIncome = data.income > 0;
+                    const hasExpense = data.expense > 0;
+
+                    if (hasIncome && hasExpense) {
+                        dayDiv.classList.add('has-both');
+                        const balance = data.income - data.expense;
+                        dayDiv.innerHTML = `
+                            <span class="calendar-day-number">${day}</span>
+                            <span class="calendar-day-amount">
+                                ${balance >= 0 ? '+' : ''}R$ ${Math.abs(balance).toFixed(0)}
+                            </span>
+                        `;
+                    } else if (hasIncome) {
+                        dayDiv.classList.add('has-income');
+                        dayDiv.innerHTML = `
+                            <span class="calendar-day-number">${day}</span>
+                            <span class="calendar-day-amount">+R$ ${data.income.toFixed(0)}</span>
+                        `;
+                    } else if (hasExpense) {
+                        dayDiv.classList.add('has-expense');
+                        dayDiv.innerHTML = `
+                            <span class="calendar-day-number">${day}</span>
+                            <span class="calendar-day-amount">-R$ ${data.expense.toFixed(0)}</span>
+                        `;
+                    }
+
+                    dayDiv.onclick = () => showDayTransactions(day);
+                } else {
+                    dayDiv.innerHTML = `<span class="calendar-day-number">${day}</span>`;
+                }
+
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // Add next month's days to fill the grid
+            const totalCells = calendarDays.children.length;
+            const remainingCells = 42 - totalCells; // 6 rows * 7 days
+
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day other-month';
+                dayDiv.innerHTML = `<span class="calendar-day-number">${i}</span>`;
+                calendarDays.appendChild(dayDiv);
+            }
+        }
+
+        function changeMonth(delta) {
+            currentCalendarMonth += delta;
+            
+            if (currentCalendarMonth > 11) {
+                currentCalendarMonth = 0;
+                currentCalendarYear++;
+            } else if (currentCalendarMonth < 0) {
+                currentCalendarMonth = 11;
+                currentCalendarYear--;
+            }
+
+            selectedDay = null;
+            document.getElementById('dayTransactionsContainer').style.display = 'none';
+            renderCalendar();
+        }
+
+        function showDayTransactions(day) {
+            selectedDay = {
+                day: day,
+                month: currentCalendarMonth,
+                year: currentCalendarYear
+            };
+
+            const date = new Date(currentCalendarYear, currentCalendarMonth, day);
+            const dateStr = date.toISOString().split('T')[0];
+
+            const dayTransactions = transactions.filter(t => t.date === dateStr);
+
+            if (dayTransactions.length === 0) {
+                return;
+            }
+
+            const monthNames = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            document.getElementById('selectedDayHeader').textContent = 
+                `Transações de ${day} de ${monthNames[currentCalendarMonth]} de ${currentCalendarYear}`;
+
+            const paymentIcons = {
+                'dinheiro': '💵',
+                'pix': '📱',
+                'credito': '💳',
+                'debito': '💳',
+                'crediario': '📝'
+            };
+
+            const paymentLabels = {
+                'dinheiro': 'Dinheiro',
+                'pix': 'PIX',
+                'credito': 'Crédito',
+                'debito': 'Débito',
+                'crediario': 'Crediário'
+            };
+
+            const typeLabels = {
+                'income': 'Receita',
+                'expense': 'Despesa',
+                'entrada': 'Entrada',
+                'saida': 'Saída'
+            };
+
+            const transactionsHTML = dayTransactions
+                .sort((a, b) => {
+                    const typeOrder = { income: 0, entrada: 1, expense: 2, saida: 3 };
+                    return typeOrder[a.type] - typeOrder[b.type];
+                })
+                .map(t => {
+                    const isIncome = t.type === 'income' || t.type === 'entrada';
+                    const color = isIncome ? 'has-text-success' : 'has-text-danger';
+                    const sign = isIncome ? '+' : '-';
+
+                    return `
+                        <div class="box mb-2" style="padding: 12px;">
+                            <div class="level is-mobile mb-0">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <div>
+                                            <p class="subtitle is-6 mb-1">
+                                                <span class="tag ${isIncome ? 'is-success' : 'is-danger'} is-light is-small">
+                                                    ${typeLabels[t.type]}
+                                                </span>
+                                                <strong class="ml-2">${t.description}</strong>
+                                            </p>
+                                            <p class="is-size-7 has-text-grey">
+                                                ${t.category} • ${paymentIcons[t.paymentMethod || 'dinheiro']} ${paymentLabels[t.paymentMethod || 'dinheiro']}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <p class="subtitle is-5 ${color} mb-0">
+                                            ${sign} R$ ${t.amount.toFixed(2)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            document.getElementById('selectedDayTransactions').innerHTML = transactionsHTML;
+            document.getElementById('dayTransactionsContainer').style.display = 'block';
+
+            renderCalendar(); // Re-render to show selected state
         }
 
         // Export Functions

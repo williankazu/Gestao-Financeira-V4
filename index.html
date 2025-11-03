@@ -91,6 +91,45 @@
             </div>
         </div>
 
+        <!-- Calendar -->
+        <div class="glass-card">
+            <h2 class="title is-4">
+                <i class="fas fa-calendar-alt"></i> Calendário Financeiro
+            </h2>
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="button is-light" onclick="changeMonth(-1)">
+                        <span class="icon"><i class="fas fa-chevron-left"></i></span>
+                    </button>
+                    <div class="calendar-month-selector">
+                        <h3 class="title is-4 has-text-white mb-0" id="calendarMonthYear"></h3>
+                    </div>
+                    <button class="button is-light" onclick="changeMonth(1)">
+                        <span class="icon"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Dom</div>
+                    <div class="calendar-day-header">Seg</div>
+                    <div class="calendar-day-header">Ter</div>
+                    <div class="calendar-day-header">Qua</div>
+                    <div class="calendar-day-header">Qui</div>
+                    <div class="calendar-day-header">Sex</div>
+                    <div class="calendar-day-header">Sáb</div>
+                </div>
+
+                <div class="calendar-grid" id="calendarDays"></div>
+
+                <div id="dayTransactionsContainer" style="display: none;">
+                    <div class="day-transactions">
+                        <div class="day-transactions-header" id="selectedDayHeader"></div>
+                        <div id="selectedDayTransactions"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filters -->
         <div class="glass-card">
             <div class="field is-grouped is-grouped-multiline is-grouped-centered">

@@ -199,6 +199,162 @@
             display: flex;
         }
 
+        /* Calendar Styles */
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f5f5f5;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .calendar-day.today {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .calendar-day.other-month:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .calendar-day.has-transactions {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .calendar-day.has-income {
+            background: linear-gradient(135deg, #48c774 0%, #00d1b2 100%);
+            color: white;
+        }
+
+        .calendar-day.has-expense {
+            background: linear-gradient(135deg, #ff3860 0%, #ff6b35 100%);
+            color: white;
+        }
+
+        .calendar-day.has-both {
+            background: linear-gradient(135deg, #48c774 0%, #ff3860 100%);
+            color: white;
+        }
+
+        .calendar-day.selected {
+            box-shadow: 0 0 0 3px #667eea;
+            transform: scale(1.1);
+        }
+
+        .calendar-day-number {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .calendar-day-amount {
+            font-size: 0.7rem;
+            margin-top: 2px;
+            font-weight: bold;
+        }
+
+        .calendar-day-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+
+        .calendar-day-indicator.income {
+            background: #48c774;
+        }
+
+        .calendar-day-indicator.expense {
+            background: #ff3860;
+        }
+
+        .calendar-month-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .day-transactions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .day-transactions-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 50px;
+                padding: 4px;
+            }
+
+            .calendar-day-number {
+                font-size: 0.9rem;
+            }
+
+            .calendar-day-amount {
+                font-size: 0.6rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .stat-value {
                 font-size: 1.8rem;
