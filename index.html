@@ -23,7 +23,7 @@
                 <div class="level-left">
                     <div class="level-item">
                         <h1 class="title is-3 has-text-primary">
-                            <i class="fas fa-brain"></i> Financeiro AI
+                            <i class="fas fa-brain"></i> FinanceAI
                         </h1>
                     </div>
                 </div>
@@ -81,6 +81,13 @@
             </h2>
             <div class="columns is-multiline" id="historicalSummary">
                 <div class="column is-3-desktop is-6-tablet">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('today')" style="cursor: pointer; transition: transform 0.3s; border: 2px solid #3298dc;">
+                        <p class="heading">Hoje</p>
+                        <p class="title is-5" id="todayBalance">R$ 0,00</p>
+                        <p class="subtitle is-7 has-text-grey" id="todayTransactions">0 transações</p>
+                    </div>
+                </div>
+                <div class="column is-3-desktop is-6-tablet">
                     <div class="box has-text-centered historical-box" onclick="filterByPeriod('yesterday')" style="cursor: pointer; transition: transform 0.3s;">
                         <p class="heading">Ontem</p>
                         <p class="title is-5" id="yesterdayBalance">R$ 0,00</p>
@@ -101,13 +108,6 @@
                         <p class="subtitle is-7 has-text-grey" id="lastMonthTransactions">0 transações</p>
                     </div>
                 </div>
-                <div class="column is-3-desktop is-6-tablet">
-                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastYear')" style="cursor: pointer; transition: transform 0.3s;">
-                        <p class="heading">Ano Passado</p>
-                        <p class="title is-5" id="lastYearBalance">R$ 0,00</p>
-                        <p class="subtitle is-7 has-text-grey" id="lastYearTransactions">0 transações</p>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -123,6 +123,7 @@
         <div class="glass-card">
             <h2 class="title is-4">
                 <i class="fas fa-credit-card"></i> Formas de Pagamento
+                <span class="tag is-info ml-2" id="paymentPeriodLabel">Todos os períodos</span>
             </h2>
             <div class="columns is-multiline" id="paymentMethodsStats">
             </div>
@@ -159,8 +160,20 @@
                 <div class="calendar-grid" id="calendarDays"></div>
 
                 <div id="dayTransactionsContainer" style="display: none;">
+                    <hr class="has-background-grey-lighter">
                     <div class="day-transactions">
-                        <div class="day-transactions-header" id="selectedDayHeader"></div>
+                        <div class="level is-mobile mb-3">
+                            <div class="level-left">
+                                <div class="level-item">
+                                    <div class="day-transactions-header" id="selectedDayHeader"></div>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="delete" onclick="closeDayTransactions()"></button>
+                                </div>
+                            </div>
+                        </div>
                         <div id="selectedDayTransactions"></div>
                     </div>
                 </div>

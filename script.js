@@ -554,6 +554,17 @@
         function updateHistoricalSummary() {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            // Today
+            const todayTrans = transactions.filter(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                return date >= today && date < tomorrow;
+            });
+            const todayIncome = todayTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const todayExpense = todayTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const todayBalance = todayIncome - todayExpense;
 
             // Yesterday
             const yesterdayStart = new Date(today);
@@ -591,20 +602,14 @@
             const lastMonthExpense = lastMonthTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
             const lastMonthBalance = lastMonthIncome - lastMonthExpense;
 
-            // Last Year
-            const lastYearTrans = transactions.filter(t => {
-                const date = new Date(t.date + 'T00:00:00');
-                return date.getFullYear() === now.getFullYear() - 1;
-            });
-            const lastYearIncome = lastYearTrans.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
-            const lastYearExpense = lastYearTrans.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
-            const lastYearBalance = lastYearIncome - lastYearExpense;
-
             // Update UI
             const formatBalance = (balance) => {
                 const color = balance >= 0 ? 'has-text-success' : 'has-text-danger';
                 return `<span class="${color}">${balance >= 0 ? '+' : ''}R$ ${balance.toFixed(2)}</span>`;
             };
+
+            document.getElementById('todayBalance').innerHTML = formatBalance(todayBalance);
+            document.getElementById('todayTransactions').textContent = `${todayTrans.length} transações`;
 
             document.getElementById('yesterdayBalance').innerHTML = formatBalance(yesterdayBalance);
             document.getElementById('yesterdayTransactions').textContent = `${yesterdayTrans.length} transações`;
@@ -614,14 +619,26 @@
 
             document.getElementById('lastMonthBalance').innerHTML = formatBalance(lastMonthBalance);
             document.getElementById('lastMonthTransactions').textContent = `${lastMonthTrans.length} transações`;
-
-            document.getElementById('lastYearBalance').innerHTML = formatBalance(lastYearBalance);
-            document.getElementById('lastYearTransactions').textContent = `${lastYearTrans.length} transações`;
         }
 
         // Update Payment Methods Stats
         function updatePaymentMethodsStats() {
             const filteredTransactions = getFilteredTransactions();
+            
+            // Update period label
+            const periodLabels = {
+                'all': 'Todos os períodos',
+                'today': 'Hoje',
+                'yesterday': 'Ontem',
+                'week': 'Esta Semana',
+                'lastWeek': 'Semana Passada',
+                'month': 'Este Mês',
+                'lastMonth': 'Mês Passado',
+                'year': 'Este Ano',
+                'lastYear': 'Ano Passado'
+            };
+            
+            document.getElementById('paymentPeriodLabel').textContent = periodLabels[currentFilter] || 'Período selecionado';
             
             const paymentMethodData = {};
             filteredTransactions.forEach(t => {
@@ -643,22 +660,24 @@
                 const amount = paymentMethodData[method] || 0;
                 const percentage = total > 0 ? ((amount / total) * 100).toFixed(1) : 0;
                 const info = paymentLabels[method];
+                const transCount = filteredTransactions.filter(t => (t.paymentMethod || 'dinheiro') === method).length;
 
                 return `
                     <div class="column is-4-desktop is-6-tablet">
-                        <div class="box has-text-centered" style="border-left: 4px solid ${info.color};">
+                        <div class="box has-text-centered payment-stats-box" style="border-left: 4px solid ${info.color};">
                             <span style="font-size: 2rem;">${info.icon}</span>
                             <p class="title is-5 mt-2">${info.name}</p>
                             <p class="subtitle is-6 has-text-weight-bold" style="color: ${info.color};">
                                 R$ ${amount.toFixed(2)}
                             </p>
                             <p class="has-text-grey">${percentage}% do total</p>
+                            <p class="has-text-grey is-size-7">${transCount} transaç${transCount !== 1 ? 'ões' : 'ão'}</p>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            document.getElementById('paymentMethodsStats').innerHTML = statsHTML;
+            document.getElementById('paymentMethodsStats').innerHTML = statsHTML || '<div class="column is-12"><p class="has-text-centered has-text-grey">Nenhuma transação neste período</p></div>';
         }
 
         // Update Chart
@@ -995,8 +1014,21 @@
                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
             ];
 
-            document.getElementById('selectedDayHeader').textContent = 
-                `Transações de ${day} de ${monthNames[currentCalendarMonth]} de ${currentCalendarYear}`;
+            // Calculate totals
+            const income = dayTransactions.filter(t => t.type === 'income' || t.type === 'entrada').reduce((s, t) => s + t.amount, 0);
+            const expense = dayTransactions.filter(t => t.type === 'expense' || t.type === 'saida').reduce((s, t) => s + t.amount, 0);
+            const balance = income - expense;
+
+            document.getElementById('selectedDayHeader').innerHTML = `
+                <div>
+                    <p class="title is-5 mb-2">📅 ${day} de ${monthNames[currentCalendarMonth]} de ${currentCalendarYear}</p>
+                    <div class="tags">
+                        <span class="tag is-success is-medium">Receitas: R$ ${income.toFixed(2)}</span>
+                        <span class="tag is-danger is-medium">Despesas: R$ ${expense.toFixed(2)}</span>
+                        <span class="tag ${balance >= 0 ? 'is-info' : 'is-warning'} is-medium">Saldo: R$ ${balance.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
 
             const paymentIcons = {
                 'dinheiro': '💵',
@@ -1064,7 +1096,18 @@
             document.getElementById('selectedDayTransactions').innerHTML = transactionsHTML;
             document.getElementById('dayTransactionsContainer').style.display = 'block';
 
+            // Scroll to transactions
+            setTimeout(() => {
+                document.getElementById('dayTransactionsContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+
             renderCalendar(); // Re-render to show selected state
+        }
+
+        function closeDayTransactions() {
+            selectedDay = null;
+            document.getElementById('dayTransactionsContainer').style.display = 'none';
+            renderCalendar();
         }
 
         // Export Functions
