@@ -1,6 +1,6 @@
 
         // Data Storage
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let transactions = loadStoredTransactions();
         let currentFilter = 'all';
         let pieChart = null;
         let currentCalendarMonth = new Date().getMonth();
@@ -29,13 +29,13 @@
         // Add Transaction
         function addTransaction() {
             const type = document.getElementById('transactionType').value;
-            const description = document.getElementById('description').value;
+            const description = document.getElementById('description').value.trim();
             const category = document.getElementById('category').value;
             const amount = parseFloat(document.getElementById('amount').value);
             const date = document.getElementById('date').value;
             const paymentMethod = document.getElementById('paymentMethod').value;
 
-            if (!description || !amount || !date) {
+            if (!description || !Number.isFinite(amount) || amount <= 0 || !isValidDateValue(date)) {
                 alert('Por favor, preencha todos os campos!');
                 return;
             }
@@ -91,13 +91,22 @@
 
             if (index === -1) return;
 
+            const description = document.getElementById('editDescription').value.trim();
+            const amount = parseFloat(document.getElementById('editAmount').value);
+            const date = document.getElementById('editDate').value;
+
+            if (!description || !Number.isFinite(amount) || amount <= 0 || !isValidDateValue(date)) {
+                alert('Por favor, preencha todos os campos com valores válidos!');
+                return;
+            }
+
             transactions[index] = {
                 ...transactions[index],
                 type: document.getElementById('editType').value,
-                description: document.getElementById('editDescription').value,
+                description: description,
                 category: document.getElementById('editCategory').value,
-                amount: parseFloat(document.getElementById('editAmount').value),
-                date: document.getElementById('editDate').value,
+                amount: amount,
+                date: date,
                 paymentMethod: document.getElementById('editPaymentMethod').value
             };
 
@@ -219,7 +228,9 @@
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('is-active');
             });
-            document.querySelector(`[data-period="${period}"]`).classList.add('is-active');
+            document.querySelectorAll(`[data-period="${period}"]`).forEach(btn => {
+                btn.classList.add('is-active');
+            });
 
             loadTransactions();
             updateStats();
@@ -278,11 +289,10 @@
                     currentPeriodEnd = new Date(today);
                     currentPeriodEnd.setDate(today.getDate() - today.getDay());
                     currentPeriodStart = new Date(currentPeriodEnd);
-                    currentPeriodStart.setDate(currentPeriodStart.getDate() - 6);
+                    currentPeriodStart.setDate(currentPeriodStart.getDate() - 7);
                     previousPeriodStart = new Date(currentPeriodStart);
                     previousPeriodStart.setDate(previousPeriodStart.getDate() - 7);
-                    previousPeriodEnd = new Date(currentPeriodEnd);
-                    previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 7);
+                    previousPeriodEnd = new Date(currentPeriodStart);
                     periodName = 'duas semanas atrás';
                     break;
 
@@ -410,14 +420,14 @@
                     case 'week':
                         const weekStart = new Date(today);
                         weekStart.setDate(today.getDate() - today.getDay()); // Domingo
-                        return transactionDate >= weekStart && transactionDate <= today;
+                        return transactionDate >= weekStart && transactionDate < tomorrow;
                     
                     case 'lastWeek':
                         const lastWeekEnd = new Date(today);
-                        lastWeekEnd.setDate(today.getDate() - today.getDay() - 1); // Sábado da semana passada
+                        lastWeekEnd.setDate(today.getDate() - today.getDay()); // Domingo desta semana
                         const lastWeekStart = new Date(lastWeekEnd);
-                        lastWeekStart.setDate(lastWeekEnd.getDate() - 6); // Domingo da semana passada
-                        return transactionDate >= lastWeekStart && transactionDate <= lastWeekEnd;
+                        lastWeekStart.setDate(lastWeekEnd.getDate() - 7); // Domingo da semana passada
+                        return transactionDate >= lastWeekStart && transactionDate < lastWeekEnd;
                     
                     case 'month':
                         return transactionDate.getMonth() === now.getMonth() && 
@@ -481,6 +491,10 @@
                 .map(t => {
                     const isPositive = t.type === 'income' || t.type === 'entrada';
                     const typeClass = isPositive ? 'income' : 'expense';
+                    const paymentMethod = paymentLabels[t.paymentMethod] ? t.paymentMethod : 'dinheiro';
+                    const safeDescription = escapeHTML(t.description);
+                    const safeCategory = escapeHTML(t.category);
+                    const safeType = escapeHTML(typeLabels[t.type] || 'Transação');
                     
                     return `
                     <div class="transaction-item ${typeClass}" id="transaction-${t.id}">
@@ -492,17 +506,17 @@
                                            data-transaction-id="${t.id}"
                                            onchange="updateBulkActions()">
                                 </div>
-                                <div class="level-item">
-                                    <div>
-                                        <p class="heading">${formatDate(t.date)} • ${typeLabels[t.type]}</p>
-                                        <p class="title is-6">${t.description}</p>
-                                        <div>
-                                            <span class="category-badge has-background-light">${t.category}</span>
-                                            <span class="category-badge has-background-info has-text-white ml-2">
-                                                ${paymentIcons[t.paymentMethod || 'dinheiro']} ${paymentLabels[t.paymentMethod || 'dinheiro']}
-                                            </span>
-                                        </div>
-                                    </div>
+	                                <div class="level-item">
+	                                    <div>
+	                                        <p class="heading">${formatDate(t.date)} • ${safeType}</p>
+	                                        <p class="title is-6">${safeDescription}</p>
+	                                        <div>
+	                                            <span class="category-badge has-background-light">${safeCategory}</span>
+	                                            <span class="category-badge has-background-info has-text-white ml-2">
+	                                                ${paymentIcons[paymentMethod]} ${paymentLabels[paymentMethod]}
+	                                            </span>
+	                                        </div>
+	                                    </div>
                                 </div>
                             </div>
                             <div class="level-right">
@@ -511,13 +525,16 @@
                                         <p class="title is-5 ${isPositive ? 'has-text-success' : 'has-text-danger'}">
                                             ${isPositive ? '+' : '-'} R$ ${t.amount.toFixed(2)}
                                         </p>
-                                        <div class="buttons is-right">
-                                            <button class="button is-small is-info" onclick="editTransaction(${t.id})">
-                                                <span class="icon"><i class="fas fa-edit"></i></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+	                                        <div class="buttons is-right">
+	                                            <button class="button is-small is-info" onclick="editTransaction(${t.id})">
+	                                                <span class="icon"><i class="fas fa-edit"></i></span>
+	                                            </button>
+	                                            <button class="button is-small is-danger" onclick="deleteTransaction(${t.id})">
+	                                                <span class="icon"><i class="fas fa-trash"></i></span>
+	                                            </button>
+	                                        </div>
+	                                    </div>
+	                                </div>
                             </div>
                         </div>
                     </div>
@@ -788,9 +805,10 @@
 
             // Insight 1: Highest spending category
             if (highestCategory) {
+                const safeHighestCategory = escapeHTML(highestCategory);
                 insights.push(`
                     <div class="notification is-ai mb-3">
-                        <strong>💡 Maior Gasto:</strong> Você gastou mais em <strong>${highestCategory}</strong> 
+                        <strong>💡 Maior Gasto:</strong> Você gastou mais em <strong>${safeHighestCategory}</strong>
                         (R$ ${highestAmount.toFixed(2)} - ${percentage}% do total). 
                         ${highestAmount > totalIncome * 0.3 ? 'Considere reduzir gastos nesta categoria.' : 'Gastos controlados!'}
                     </div>
@@ -1062,6 +1080,10 @@
                     const isIncome = t.type === 'income' || t.type === 'entrada';
                     const color = isIncome ? 'has-text-success' : 'has-text-danger';
                     const sign = isIncome ? '+' : '-';
+                    const paymentMethod = paymentLabels[t.paymentMethod] ? t.paymentMethod : 'dinheiro';
+                    const safeDescription = escapeHTML(t.description);
+                    const safeCategory = escapeHTML(t.category);
+                    const safeType = escapeHTML(typeLabels[t.type] || 'Transação');
 
                     return `
                         <div class="box mb-2" style="padding: 12px;">
@@ -1069,15 +1091,15 @@
                                 <div class="level-left">
                                     <div class="level-item">
                                         <div>
-                                            <p class="subtitle is-6 mb-1">
-                                                <span class="tag ${isIncome ? 'is-success' : 'is-danger'} is-light is-small">
-                                                    ${typeLabels[t.type]}
-                                                </span>
-                                                <strong class="ml-2">${t.description}</strong>
-                                            </p>
-                                            <p class="is-size-7 has-text-grey">
-                                                ${t.category} • ${paymentIcons[t.paymentMethod || 'dinheiro']} ${paymentLabels[t.paymentMethod || 'dinheiro']}
-                                            </p>
+	                                            <p class="subtitle is-6 mb-1">
+	                                                <span class="tag ${isIncome ? 'is-success' : 'is-danger'} is-light is-small">
+	                                                    ${safeType}
+	                                                </span>
+	                                                <strong class="ml-2">${safeDescription}</strong>
+	                                            </p>
+	                                            <p class="is-size-7 has-text-grey">
+	                                                ${safeCategory} • ${paymentIcons[paymentMethod]} ${paymentLabels[paymentMethod]}
+	                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -1145,6 +1167,7 @@
         }
 
         function exportToCSV() {
+            const headers = ['Data', 'Tipo', 'Descrição', 'Categoria', 'Forma de Pagamento', 'Valor'];
             const typeLabels = {
                 'income': 'Receita',
                 'expense': 'Despesa',
@@ -1160,18 +1183,18 @@
                 'crediario': 'Crediário'
             };
 
-            const data = getFilteredTransactions().map(t => ({
-                'Data': t.date,
-                'Tipo': typeLabels[t.type],
-                'Descrição': t.description,
-                'Categoria': t.category,
-                'Forma de Pagamento': paymentLabels[t.paymentMethod || 'dinheiro'],
-                'Valor': t.amount
-            }));
+            const data = getFilteredTransactions().map(t => [
+                t.date,
+                typeLabels[t.type] || 'Transação',
+                t.description,
+                t.category,
+                paymentLabels[t.paymentMethod || 'dinheiro'] || 'Dinheiro',
+                t.amount
+            ]);
 
             const csv = [
-                Object.keys(data[0]).join(','),
-                ...data.map(row => Object.values(row).join(','))
+                headers.map(escapeCSVValue).join(','),
+                ...data.map(row => row.map(escapeCSVValue).join(','))
             ].join('\n');
 
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -1180,6 +1203,7 @@
             a.href = url;
             a.download = `financas_${currentFilter}_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
+            window.URL.revokeObjectURL(url);
 
             showNotification('Exportado para CSV com sucesso!', 'is-success');
         }
@@ -1196,8 +1220,8 @@
             doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 38);
 
             const filteredTransactions = getFilteredTransactions();
-            const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const expense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const income = filteredTransactions.filter(t => t.type === 'income' || t.type === 'entrada').reduce((sum, t) => sum + t.amount, 0);
+            const expense = filteredTransactions.filter(t => t.type === 'expense' || t.type === 'saida').reduce((sum, t) => sum + t.amount, 0);
 
             doc.text(`Receitas: R$ ${income.toFixed(2)}`, 14, 48);
             doc.text(`Despesas: R$ ${expense.toFixed(2)}`, 14, 54);
@@ -1214,7 +1238,7 @@
                     doc.addPage();
                     y = 20;
                 }
-                const line = `${t.date} | ${t.type === 'income' ? '+' : '-'}R$ ${t.amount.toFixed(2)} | ${t.description}`;
+                const line = `${t.date} | ${t.type === 'income' || t.type === 'entrada' ? '+' : '-'}R$ ${t.amount.toFixed(2)} | ${String(t.description || '').slice(0, 80)}`;
                 doc.text(line, 14, y);
                 y += 7;
             });
@@ -1251,7 +1275,7 @@
         }
 
         function importCSV(content) {
-            const lines = content.split('\n').slice(1); // Skip header
+            const lines = parseCSV(content).slice(1); // Skip header
             let imported = 0;
 
             const reverseTypeLabels = {
@@ -1269,18 +1293,17 @@
                 'Crediário': 'crediario'
             };
 
-            lines.forEach(line => {
-                if (!line.trim()) return;
-
-                const parts = line.split(',');
+            lines.forEach(parts => {
+                if (!parts.some(part => String(part).trim())) return;
                 if (parts.length < 5) return;
 
-                const date = parts[0];
-                const type = reverseTypeLabels[parts[1]] || 'expense';
-                const description = parts[2];
-                const category = parts[3];
-                const paymentMethod = reversePaymentLabels[parts[4]] || 'dinheiro';
+                const date = String(parts[0] || '').trim();
+                const type = reverseTypeLabels[String(parts[1] || '').trim()] || 'expense';
+                const description = String(parts[2] || '').trim();
+                const category = String(parts[3] || 'Outros').trim();
+                const paymentMethod = reversePaymentLabels[String(parts[4] || '').trim()] || 'dinheiro';
                 const amount = parseFloat(parts[5] || parts[4]); // fallback for old format
+                if (!description || !Number.isFinite(amount) || amount <= 0 || !isValidDateValue(date)) return;
 
                 transactions.push({
                     id: Date.now() + imported,
@@ -1301,6 +1324,7 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
 
             showNotification(`${imported} transações importadas com sucesso!`, 'is-success');
         }
@@ -1330,15 +1354,20 @@
             data.forEach((row, index) => {
                 const type = reverseTypeLabels[row['Tipo']] || 'expense';
                 const paymentMethod = reversePaymentLabels[row['Forma de Pagamento']] || 'dinheiro';
+                const description = String(row['Descrição'] || row['Descricao'] || '').trim();
+                const category = String(row['Categoria'] || 'Outros').trim();
+                const amount = parseFloat(row['Valor']);
+                const date = normalizeExcelDate(row['Data']);
+                if (!description || !Number.isFinite(amount) || amount <= 0 || !isValidDateValue(date)) return;
 
                 transactions.push({
                     id: Date.now() + imported,
                     type: type,
-                    description: row['Descrição'] || row['Descricao'],
-                    category: row['Categoria'],
+                    description: description,
+                    category: category,
                     paymentMethod: paymentMethod,
-                    amount: parseFloat(row['Valor']),
-                    date: row['Data'],
+                    amount: amount,
+                    date: date,
                     timestamp: new Date().getTime()
                 });
 
@@ -1350,11 +1379,120 @@
             updateStats();
             updateChart();
             generateAIInsights();
+            renderCalendar();
 
             showNotification(`${imported} transações importadas com sucesso!`, 'is-success');
         }
 
         // Helper Functions
+        function loadStoredTransactions() {
+            try {
+                const stored = JSON.parse(localStorage.getItem('transactions')) || [];
+                if (!Array.isArray(stored)) return [];
+                return stored.map(normalizeTransaction).filter(Boolean);
+            } catch (error) {
+                console.warn('Não foi possível carregar as transações salvas.', error);
+                return [];
+            }
+        }
+
+        function normalizeTransaction(transaction) {
+            if (!transaction || typeof transaction !== 'object') return null;
+
+            const amount = parseFloat(transaction.amount);
+            const date = normalizeExcelDate(transaction.date);
+            const description = String(transaction.description || '').trim();
+            const category = String(transaction.category || 'Outros').trim();
+            const validTypes = ['income', 'expense', 'entrada', 'saida'];
+            const validPaymentMethods = ['dinheiro', 'pix', 'credito', 'debito', 'crediario'];
+
+            if (!description || !Number.isFinite(amount) || amount <= 0 || !isValidDateValue(date)) {
+                return null;
+            }
+
+            return {
+                id: Number.isFinite(Number(transaction.id)) ? Number(transaction.id) : Date.now(),
+                type: validTypes.includes(transaction.type) ? transaction.type : 'expense',
+                description,
+                category,
+                amount,
+                date,
+                paymentMethod: validPaymentMethods.includes(transaction.paymentMethod) ? transaction.paymentMethod : 'dinheiro',
+                timestamp: Number.isFinite(Number(transaction.timestamp)) ? Number(transaction.timestamp) : Date.now()
+            };
+        }
+
+        function isValidDateValue(value) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return false;
+            const date = new Date(`${value}T00:00:00`);
+            return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+        }
+
+        function normalizeExcelDate(value) {
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                excelEpoch.setUTCDate(excelEpoch.getUTCDate() + value);
+                return excelEpoch.toISOString().slice(0, 10);
+            }
+
+            return String(value || '').trim();
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function escapeCSVValue(value) {
+            const text = String(value ?? '');
+            if (/[",\n\r]/.test(text)) {
+                return `"${text.replace(/"/g, '""')}"`;
+            }
+            return text;
+        }
+
+        function parseCSV(content) {
+            const rows = [];
+            let row = [];
+            let value = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < content.length; i++) {
+                const char = content[i];
+                const next = content[i + 1];
+
+                if (char === '"' && inQuotes && next === '"') {
+                    value += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    row.push(value);
+                    value = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (char === '\r' && next === '\n') i++;
+                    row.push(value);
+                    rows.push(row);
+                    row = [];
+                    value = '';
+                } else {
+                    value += char;
+                }
+            }
+
+            if (value || row.length) {
+                row.push(value);
+                rows.push(row);
+            }
+
+            return rows;
+        }
+
         function formatDate(dateString) {
             const date = new Date(dateString + 'T00:00:00');
             return date.toLocaleDateString('pt-BR');
@@ -1368,10 +1506,12 @@
             notification.style.right = '20px';
             notification.style.zIndex = '10000';
             notification.style.minWidth = '300px';
-            notification.innerHTML = `
-                <button class="delete" onclick="this.parentElement.remove()"></button>
-                ${message}
-            `;
+
+            const closeButton = document.createElement('button');
+            closeButton.className = 'delete';
+            closeButton.addEventListener('click', () => notification.remove());
+            notification.appendChild(closeButton);
+            notification.appendChild(document.createTextNode(` ${message}`));
 
             document.body.appendChild(notification);
 
@@ -1379,4 +1519,3 @@
                 notification.remove();
             }, 3000);
         }
-    
