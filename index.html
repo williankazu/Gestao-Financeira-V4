@@ -18,26 +18,58 @@
 
     <div class="main-container">
         <!-- Header -->
-        <div class="glass-card">
-            <div class="level is-mobile">
-                <div class="level-left">
-                    <div class="level-item">
-                        <h1 class="title is-3 has-text-primary">
-                            <i class="fas fa-brain"></i> FinanceAI
-                        </h1>
+        <header class="glass-card app-header-card">
+            <div class="app-header">
+                <div class="brand-lockup">
+                    <div class="brand-icon" aria-hidden="true">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="app-eyebrow">Dashboard financeiro</p>
+                        <h1 class="title is-3">FinanceAI</h1>
+                        <p class="app-subtitle">Controle receitas, despesas e pagamentos com visão clara do caixa.</p>
                     </div>
                 </div>
-                <div class="level-right">
-                    <div class="level-item">
-                        <button class="button is-primary" onclick="openModal('addModal')">
-                            <span class="icon"><i class="fas fa-plus"></i></span>
-                            <span>Nova Transação</span>
-                        </button>
-                    </div>
+                <div class="header-actions">
+                    <span class="status-chip" id="backupStatusChip">
+                        <i class="fas fa-lock"></i>
+                        <span id="backupStatusText">Dados locais</span>
+                    </span>
+                    <button class="button is-primary" onclick="openModal('addModal')">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Nova Transação</span>
+                    </button>
                 </div>
             </div>
-        </div>
+        </header>
 
+        <div class="app-shell">
+            <aside class="app-sidebar" aria-label="Navegação do dashboard">
+                <nav class="sidebar-nav">
+                    <a href="#resumo" class="sidebar-link is-active">
+                        <i class="fas fa-chart-simple"></i>
+                        <span>Resumo</span>
+                    </a>
+                    <a href="#pagamentos" class="sidebar-link">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a href="#calendario" class="sidebar-link">
+                        <i class="fas fa-calendar-days"></i>
+                        <span>Calendário</span>
+                    </a>
+                    <a href="#filtros" class="sidebar-link">
+                        <i class="fas fa-sliders"></i>
+                        <span>Filtros</span>
+                    </a>
+                    <a href="#relatorios" class="sidebar-link">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <main class="dashboard-content">
         <!-- Stats Cards -->
         <div class="columns is-multiline">
             <div class="column is-3-desktop is-6-tablet">
@@ -45,7 +77,7 @@
                     <i class="fas fa-arrow-up stat-icon"></i>
                     <div class="stat-label">Receitas</div>
                     <div class="stat-value" id="totalIncome">R$ 0,00</div>
-                    <div class="stat-label">Este mês</div>
+                    <div class="stat-label" id="incomePeriodLabel">Todos os períodos</div>
                 </div>
             </div>
             <div class="column is-3-desktop is-6-tablet">
@@ -53,7 +85,7 @@
                     <i class="fas fa-arrow-down stat-icon"></i>
                     <div class="stat-label">Despesas</div>
                     <div class="stat-value" id="totalExpense">R$ 0,00</div>
-                    <div class="stat-label">Este mês</div>
+                    <div class="stat-label" id="expensePeriodLabel">Todos os períodos</div>
                 </div>
             </div>
             <div class="column is-3-desktop is-6-tablet">
@@ -61,7 +93,7 @@
                     <i class="fas fa-wallet stat-icon"></i>
                     <div class="stat-label">Saldo</div>
                     <div class="stat-value" id="balance">R$ 0,00</div>
-                    <div class="stat-label">Atual</div>
+                    <div class="stat-label" id="balancePeriodLabel">Todos os períodos</div>
                 </div>
             </div>
             <div class="column is-3-desktop is-6-tablet">
@@ -69,40 +101,40 @@
                     <i class="fas fa-piggy-bank stat-icon"></i>
                     <div class="stat-label">Economia</div>
                     <div class="stat-value" id="savings">0%</div>
-                    <div class="stat-label">Taxa de economia</div>
+                    <div class="stat-label" id="savingsPeriodLabel">Taxa no período</div>
                 </div>
             </div>
         </div>
 
         <!-- Historical Summary -->
-        <div class="glass-card">
+        <div class="glass-card" id="resumo">
             <h2 class="title is-4">
                 <i class="fas fa-history"></i> Resumo Histórico
             </h2>
             <div class="columns is-multiline" id="historicalSummary">
                 <div class="column is-3-desktop is-6-tablet">
-                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('today')" style="cursor: pointer; transition: transform 0.3s; border: 2px solid #3298dc;">
+                    <div class="box has-text-centered historical-box is-featured" onclick="filterByPeriod('today')">
                         <p class="heading">Hoje</p>
                         <p class="title is-5" id="todayBalance">R$ 0,00</p>
                         <p class="subtitle is-7 has-text-grey" id="todayTransactions">0 transações</p>
                     </div>
                 </div>
                 <div class="column is-3-desktop is-6-tablet">
-                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('yesterday')" style="cursor: pointer; transition: transform 0.3s;">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('yesterday')">
                         <p class="heading">Ontem</p>
                         <p class="title is-5" id="yesterdayBalance">R$ 0,00</p>
                         <p class="subtitle is-7 has-text-grey" id="yesterdayTransactions">0 transações</p>
                     </div>
                 </div>
                 <div class="column is-3-desktop is-6-tablet">
-                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastWeek')" style="cursor: pointer; transition: transform 0.3s;">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastWeek')">
                         <p class="heading">Semana Passada</p>
                         <p class="title is-5" id="lastWeekBalance">R$ 0,00</p>
                         <p class="subtitle is-7 has-text-grey" id="lastWeekTransactions">0 transações</p>
                     </div>
                 </div>
                 <div class="column is-3-desktop is-6-tablet">
-                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastMonth')" style="cursor: pointer; transition: transform 0.3s;">
+                    <div class="box has-text-centered historical-box" onclick="filterByPeriod('lastMonth')">
                         <p class="heading">Mês Passado</p>
                         <p class="title is-5" id="lastMonthBalance">R$ 0,00</p>
                         <p class="subtitle is-7 has-text-grey" id="lastMonthTransactions">0 transações</p>
@@ -111,16 +143,8 @@
             </div>
         </div>
 
-        <!-- AI Insights -->
-        <div class="glass-card">
-            <h2 class="title is-4">
-                <i class="fas fa-robot"></i> Insights com IA
-            </h2>
-            <div id="aiInsights"></div>
-        </div>
-
         <!-- Payment Methods Stats -->
-        <div class="glass-card">
+        <div class="glass-card" id="pagamentos">
             <h2 class="title is-4">
                 <i class="fas fa-credit-card"></i> Formas de Pagamento
                 <span class="tag is-info ml-2" id="paymentPeriodLabel">Todos os períodos</span>
@@ -130,7 +154,7 @@
         </div>
 
         <!-- Calendar -->
-        <div class="glass-card">
+        <div class="glass-card" id="calendario">
             <h2 class="title is-4">
                 <i class="fas fa-calendar-alt"></i> Calendário Financeiro
             </h2>
@@ -170,7 +194,7 @@
                             </div>
                             <div class="level-right">
                                 <div class="level-item">
-                                    <button class="delete" onclick="closeDayTransactions()"></button>
+                                    <button class="delete" onclick="closeDayTransactions()" aria-label="Fechar"></button>
                                 </div>
                             </div>
                         </div>
@@ -181,9 +205,9 @@
         </div>
 
         <!-- Filters -->
-        <div class="glass-card">
+        <div class="glass-card" id="filtros">
             <h3 class="title is-5 mb-4">
-                <i class="fas fa-filter"></i> Filtros de Período
+                <i class="fas fa-filter"></i> Filtros
             </h3>
             
             <!-- Current Periods -->
@@ -229,6 +253,68 @@
             </div>
 
             <!-- Divider -->
+            <hr class="has-background-grey-lighter">
+
+            <div class="filter-panel">
+                <div class="columns is-multiline">
+                    <div class="column is-5-desktop is-12-tablet">
+                        <label class="label is-small" for="searchInput">Buscar</label>
+                        <div class="control has-icons-left">
+                            <input class="input" type="search" id="searchInput" placeholder="Descrição ou categoria">
+                            <span class="icon is-left"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                    <div class="column is-2-desktop is-6-tablet">
+                        <label class="label is-small" for="typeFilter">Tipo</label>
+                        <div class="select is-fullwidth">
+                            <select id="typeFilter">
+                                <option value="all">Todos</option>
+                                <option value="income">Receitas</option>
+                                <option value="expense">Despesas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="column is-2-desktop is-6-tablet">
+                        <label class="label is-small" for="categoryFilter">Categoria</label>
+                        <div class="select is-fullwidth">
+                            <select id="categoryFilter">
+                                <option value="all">Todas</option>
+                                <option value="Sangria">Sangria</option>
+                                <option value="Caixa">Caixa</option>
+                                <option value="Saldo">Saldo</option>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Investimentos">Investimentos</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="column is-2-desktop is-6-tablet">
+                        <label class="label is-small" for="paymentFilter">Pagamento</label>
+                        <div class="select is-fullwidth">
+                            <select id="paymentFilter">
+                                <option value="all">Todos</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pix">PIX</option>
+                                <option value="credito">Crédito</option>
+                                <option value="debito">Débito</option>
+                                <option value="crediario">Crediário</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="column is-1-desktop is-6-tablet filter-reset-column">
+                        <button class="button is-light is-fullwidth" onclick="resetDetailFilters()" title="Limpar filtros" aria-label="Limpar filtros">
+                            <span class="icon"><i class="fas fa-eraser"></i></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <hr class="has-background-grey-lighter">
 
             <!-- Previous Periods -->
@@ -307,40 +393,13 @@
                 </span>
             </div>
 
-            <div class="field is-grouped is-grouped-multiline is-grouped-centered">
-                <p class="control">
-                    <button class="button is-info filter-btn is-active" onclick="filterByPeriod('all')" data-period="all">
-                        <span class="icon"><i class="fas fa-infinity"></i></span>
-                        <span>Todos</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button is-info filter-btn" onclick="filterByPeriod('today')" data-period="today">
-                        <span class="icon"><i class="fas fa-calendar-day"></i></span>
-                        <span>Hoje</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button is-info filter-btn" onclick="filterByPeriod('week')" data-period="week">
-                        <span class="icon"><i class="fas fa-calendar-week"></i></span>
-                        <span>Semana</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button is-info filter-btn" onclick="filterByPeriod('month')" data-period="month">
-                        <span class="icon"><i class="fas fa-calendar-alt"></i></span>
-                        <span>Mês</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button is-info filter-btn" onclick="filterByPeriod('year')" data-period="year">
-                        <span class="icon"><i class="fas fa-calendar"></i></span>
-                        <span>Ano</span>
-                    </button>
-                </p>
-            </div>
-
             <div class="field is-grouped is-grouped-multiline is-grouped-centered mt-4">
+                <p class="control">
+                    <button class="button is-primary action-btn" onclick="exportBackupJSON()">
+                        <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                        <span>Backup JSON</span>
+                    </button>
+                </p>
                 <p class="control">
                     <button class="button is-success action-btn" onclick="exportToExcel()">
                         <span class="icon"><i class="fas fa-file-excel"></i></span>
@@ -364,7 +423,7 @@
                         <span class="icon"><i class="fas fa-file-import"></i></span>
                         <span>Importar</span>
                     </button>
-                    <input type="file" id="importFile" accept=".xlsx,.csv" style="display: none;" onchange="importData(event)">
+                    <input type="file" id="importFile" accept=".xlsx,.csv,.json,application/json" style="display: none;" onchange="importData(event)">
                 </p>
             </div>
         </div>
@@ -372,7 +431,7 @@
         <!-- Chart and Transactions -->
         <div class="columns">
             <div class="column is-6">
-                <div class="glass-card">
+                <div class="glass-card" id="relatorios">
                     <h2 class="title is-4">
                         <i class="fas fa-chart-pie"></i> Despesas por Categoria
                     </h2>
@@ -382,7 +441,7 @@
                 </div>
             </div>
             <div class="column is-6">
-                <div class="glass-card">
+                <div class="glass-card" id="transacoes">
                     <h2 class="title is-4">
                         <i class="fas fa-list"></i> Transações Recentes
                     </h2>
@@ -415,6 +474,8 @@
                 </div>
             </div>
         </div>
+            </main>
+        </div>
     </div>
 
     <!-- Add Transaction Modal -->
@@ -423,7 +484,7 @@
         <div class="modal-card">
             <header class="modal-card-head has-background-primary">
                 <p class="modal-card-title has-text-white">Nova Transação</p>
-                <button class="delete" onclick="closeModal('addModal')"></button>
+                <button class="delete" onclick="closeModal('addModal')" aria-label="Fechar"></button>
             </header>
             <section class="modal-card-body">
                 <div class="field">
@@ -443,7 +504,7 @@
                 <div class="field">
                     <label class="label">Descrição</label>
                     <div class="control">
-                        <input class="input" type="text" id="description" placeholder="Ex: Salário, Aluguel...">
+                        <input class="input" type="text" id="description" placeholder="Ex: Salário, Aluguel..." data-autofocus>
                     </div>
                 </div>
 
@@ -452,18 +513,18 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select id="category">
-                                <option value="Sangria">💸 Sangria</option>
-                                <option value="Caixa">💰 Caixa</option>
-                                <option value="Saldo">📊 Saldo</option>
-                                <option value="Alimentação">🍔 Alimentação</option>
-                                <option value="Transporte">🚗 Transporte</option>
-                                <option value="Moradia">🏠 Moradia</option>
-                                <option value="Saúde">🏥 Saúde</option>
-                                <option value="Educação">📚 Educação</option>
-                                <option value="Lazer">🎮 Lazer</option>
-                                <option value="Salário">💵 Salário</option>
-                                <option value="Investimentos">📈 Investimentos</option>
-                                <option value="Outros">📦 Outros</option>
+                                <option value="Sangria">Sangria</option>
+                                <option value="Caixa">Caixa</option>
+                                <option value="Saldo">Saldo</option>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Investimentos">Investimentos</option>
+                                <option value="Outros">Outros</option>
                             </select>
                         </div>
                     </div>
@@ -474,11 +535,11 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select id="paymentMethod">
-                                <option value="dinheiro">💵 Dinheiro</option>
-                                <option value="pix">📱 PIX</option>
-                                <option value="credito">💳 Crédito</option>
-                                <option value="debito">💳 Débito</option>
-                                <option value="crediario">📝 Crediário</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pix">PIX</option>
+                                <option value="credito">Crédito</option>
+                                <option value="debito">Débito</option>
+                                <option value="crediario">Crediário</option>
                             </select>
                         </div>
                     </div>
@@ -512,7 +573,7 @@
         <div class="modal-card">
             <header class="modal-card-head has-background-info">
                 <p class="modal-card-title has-text-white">Editar Transação</p>
-                <button class="delete" onclick="closeModal('editModal')"></button>
+                <button class="delete" onclick="closeModal('editModal')" aria-label="Fechar"></button>
             </header>
             <section class="modal-card-body">
                 <input type="hidden" id="editId">
@@ -533,7 +594,7 @@
                 <div class="field">
                     <label class="label">Descrição</label>
                     <div class="control">
-                        <input class="input" type="text" id="editDescription">
+                        <input class="input" type="text" id="editDescription" data-autofocus>
                     </div>
                 </div>
 
@@ -542,18 +603,18 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select id="editCategory">
-                                <option value="Sangria">💸 Sangria</option>
-                                <option value="Caixa">💰 Caixa</option>
-                                <option value="Saldo">📊 Saldo</option>
-                                <option value="Alimentação">🍔 Alimentação</option>
-                                <option value="Transporte">🚗 Transporte</option>
-                                <option value="Moradia">🏠 Moradia</option>
-                                <option value="Saúde">🏥 Saúde</option>
-                                <option value="Educação">📚 Educação</option>
-                                <option value="Lazer">🎮 Lazer</option>
-                                <option value="Salário">💵 Salário</option>
-                                <option value="Investimentos">📈 Investimentos</option>
-                                <option value="Outros">📦 Outros</option>
+                                <option value="Sangria">Sangria</option>
+                                <option value="Caixa">Caixa</option>
+                                <option value="Saldo">Saldo</option>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Investimentos">Investimentos</option>
+                                <option value="Outros">Outros</option>
                             </select>
                         </div>
                     </div>
@@ -564,11 +625,11 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select id="editPaymentMethod">
-                                <option value="dinheiro">💵 Dinheiro</option>
-                                <option value="pix">📱 PIX</option>
-                                <option value="credito">💳 Crédito</option>
-                                <option value="debito">💳 Débito</option>
-                                <option value="crediario">📝 Crediário</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pix">PIX</option>
+                                <option value="credito">Crédito</option>
+                                <option value="debito">Débito</option>
+                                <option value="crediario">Crediário</option>
                             </select>
                         </div>
                     </div>
