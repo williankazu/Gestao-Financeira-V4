@@ -6,6 +6,20 @@
         const INCOME_TYPES = ['income', 'entrada'];
         const EXPENSE_TYPES = ['expense', 'saida'];
         const COMPARABLE_PERIODS = ['today', 'yesterday', 'week', 'lastWeek', 'month', 'lastMonth', 'year', 'lastYear'];
+        const BRL_FORMATTER = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+        const BRL_SHORT_FORMATTER = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        const BRL_INPUT_FORMATTER = new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
         const PERIOD_LABELS = {
             all: 'Todos os períodos',
             today: 'Hoje',
@@ -49,11 +63,15 @@
             const typeFilter = document.getElementById('typeFilter');
             const categoryFilter = document.getElementById('categoryFilter');
             const paymentFilter = document.getElementById('paymentFilter');
+            const amountInput = document.getElementById('amount');
+            const editAmountInput = document.getElementById('editAmount');
 
             searchInput.addEventListener('input', updateDetailFilters);
             typeFilter.addEventListener('change', updateDetailFilters);
             categoryFilter.addEventListener('change', updateDetailFilters);
             paymentFilter.addEventListener('change', updateDetailFilters);
+            bindAmountInput(amountInput);
+            bindAmountInput(editAmountInput);
             bindSidebarNavigation();
             bindCloseProtection();
 
@@ -183,7 +201,7 @@
             document.getElementById('editType').value = transaction.type;
             document.getElementById('editDescription').value = transaction.description;
             document.getElementById('editCategory').value = transaction.category;
-            document.getElementById('editAmount').value = transaction.amount;
+            document.getElementById('editAmount').value = formatAmountInput(transaction.amount);
             document.getElementById('editDate').value = transaction.date;
             document.getElementById('editPaymentMethod').value = transaction.paymentMethod || 'dinheiro';
 
@@ -521,7 +539,6 @@
 
             // Update UI
             const formatComparison = (diff, percent, isExpense = false) => {
-                const sign = diff >= 0 ? '+' : '';
                 const color = isExpense 
                     ? (diff > 0 ? 'has-text-danger' : 'has-text-success')
                     : (diff >= 0 ? 'has-text-success' : 'has-text-danger');
@@ -529,7 +546,7 @@
                 
                 return `
                     <span class="${color}">
-                        ${sign}R$ ${Math.abs(diff).toFixed(2)} 
+                        ${formatSignedCurrency(diff)}
                         (${arrow} ${Math.abs(percent).toFixed(1)}%)
                     </span>
                     <br>
@@ -661,7 +678,7 @@
                                 <div class="level-item">
                                     <div class="has-text-right">
                                         <p class="title is-5 ${isPositive ? 'has-text-success' : 'has-text-danger'}">
-                                            ${isPositive ? '+' : '-'} R$ ${t.amount.toFixed(2)}
+                                            ${formatTransactionCurrency(t.amount, isPositive)}
                                         </p>
 	                                        <div class="buttons is-right">
 	                                            <button class="button is-small is-info" onclick="editTransaction(${t.id})" title="Editar" aria-label="Editar transação">
@@ -697,9 +714,9 @@
             const savingsRate = income > 0 ? ((balance / income) * 100) : 0;
             const periodLabel = getPeriodLabel();
 
-            document.getElementById('totalIncome').textContent = `R$ ${income.toFixed(2)}`;
-            document.getElementById('totalExpense').textContent = `R$ ${expense.toFixed(2)}`;
-            document.getElementById('balance').textContent = `R$ ${balance.toFixed(2)}`;
+            document.getElementById('totalIncome').textContent = formatCurrency(income);
+            document.getElementById('totalExpense').textContent = formatCurrency(expense);
+            document.getElementById('balance').textContent = formatCurrency(balance);
             document.getElementById('savings').textContent = `${savingsRate.toFixed(1)}%`;
             document.getElementById('incomePeriodLabel').textContent = periodLabel;
             document.getElementById('expensePeriodLabel').textContent = periodLabel;
@@ -765,7 +782,7 @@
             // Update UI
             const formatBalance = (balance) => {
                 const color = balance >= 0 ? 'has-text-success' : 'has-text-danger';
-                return `<span class="${color}">${balance >= 0 ? '+' : ''}R$ ${balance.toFixed(2)}</span>`;
+                return `<span class="${color}">${formatSignedCurrency(balance)}</span>`;
             };
 
             document.getElementById('todayBalance').innerHTML = formatBalance(todayBalance);
@@ -794,11 +811,11 @@
             });
 
             const paymentLabels = {
-                'dinheiro': { name: 'Dinheiro', icon: getPaymentIconHTML('dinheiro'), color: '#0f766e' },
-                'pix': { name: 'PIX', icon: getPaymentIconHTML('pix'), color: '#0284c7' },
-                'credito': { name: 'Crédito', icon: getPaymentIconHTML('credito'), color: '#4f46e5' },
-                'debito': { name: 'Débito', icon: getPaymentIconHTML('debito'), color: '#0d9488' },
-                'crediario': { name: 'Crediário', icon: getPaymentIconHTML('crediario'), color: '#b45309' }
+                'dinheiro': { name: 'Dinheiro', icon: getPaymentIconHTML('dinheiro'), color: '#168a78' },
+                'pix': { name: 'PIX', icon: getPaymentIconHTML('pix'), color: '#3478c7' },
+                'credito': { name: 'Crédito', icon: getPaymentIconHTML('credito'), color: '#7d63d9' },
+                'debito': { name: 'Débito', icon: getPaymentIconHTML('debito'), color: '#149c8b' },
+                'crediario': { name: 'Crediário', icon: getPaymentIconHTML('crediario'), color: '#b86d00' }
             };
 
             const total = Object.values(paymentMethodData).reduce((sum, val) => sum + val, 0);
@@ -815,7 +832,7 @@
                             <span class="payment-method-icon" style="color: ${info.color};">${info.icon}</span>
                             <p class="title is-5 mt-2">${info.name}</p>
                             <p class="subtitle is-6 has-text-weight-bold" style="color: ${info.color};">
-                                R$ ${amount.toFixed(2)}
+                                ${formatCurrency(amount)}
                             </p>
                             <p class="has-text-grey">${percentage}% do total</p>
                             <p class="has-text-grey is-size-7">${transCount} transaç${transCount !== 1 ? 'ões' : 'ão'}</p>
@@ -854,19 +871,22 @@
                     datasets: [{
                         data: data,
                         backgroundColor: [
-                            '#ff6b35',
-                            '#f7931e',
-                            '#ffdd57',
-                            '#48c774',
-                            '#00d1b2',
-                            '#3298dc',
-                            '#667eea',
-                            '#b86bff',
-                            '#ff3860',
-                            '#ff1744',
-                            '#00bcd4',
-                            '#4caf50'
-                        ]
+                            '#ff8a80',
+                            '#ffd166',
+                            '#25b99f',
+                            '#62b7f6',
+                            '#9b7ef5',
+                            '#f48fb1',
+                            '#6ec6ca',
+                            '#c7a4ff',
+                            '#ffb36b',
+                            '#7bdcb5',
+                            '#8fb8ff',
+                            '#d64263'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 8
                     }]
                 },
                 options: {
@@ -881,7 +901,7 @@
                                 label: function(context) {
                                     const value = context.parsed;
                                     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                    return `${context.label}: R$ ${value.toFixed(2)} (${percentage}%)`;
+                                    return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
                                 }
                             }
                         }
@@ -980,20 +1000,20 @@
                         dayDiv.innerHTML = `
                             <span class="calendar-day-number">${day}</span>
                             <span class="calendar-day-amount">
-                                ${balance >= 0 ? '+' : ''}R$ ${Math.abs(balance).toFixed(0)}
+                                ${formatSignedCurrency(balance, { short: true })}
                             </span>
                         `;
                     } else if (hasIncome) {
                         dayDiv.classList.add('has-income');
                         dayDiv.innerHTML = `
                             <span class="calendar-day-number">${day}</span>
-                            <span class="calendar-day-amount">+R$ ${data.income.toFixed(0)}</span>
+                            <span class="calendar-day-amount">${formatSignedCurrency(data.income, { short: true })}</span>
                         `;
                     } else if (hasExpense) {
                         dayDiv.classList.add('has-expense');
                         dayDiv.innerHTML = `
                             <span class="calendar-day-number">${day}</span>
-                            <span class="calendar-day-amount">-R$ ${data.expense.toFixed(0)}</span>
+                            <span class="calendar-day-amount">${formatTransactionCurrency(data.expense, false, { short: true })}</span>
                         `;
                     }
 
@@ -1063,9 +1083,9 @@
                 <div>
                     <p class="title is-5 mb-2"><i class="fas fa-calendar-day" aria-hidden="true"></i> ${day} de ${monthNames[currentCalendarMonth]} de ${currentCalendarYear}</p>
                     <div class="tags">
-                        <span class="tag is-success is-medium">Receitas: R$ ${income.toFixed(2)}</span>
-                        <span class="tag is-danger is-medium">Despesas: R$ ${expense.toFixed(2)}</span>
-                        <span class="tag ${balance >= 0 ? 'is-info' : 'is-warning'} is-medium">Saldo: R$ ${balance.toFixed(2)}</span>
+                        <span class="tag is-success is-medium">Receitas: ${formatCurrency(income)}</span>
+                        <span class="tag is-danger is-medium">Despesas: ${formatCurrency(expense)}</span>
+                        <span class="tag ${balance >= 0 ? 'is-info' : 'is-warning'} is-medium">Saldo: ${formatCurrency(balance)}</span>
                     </div>
                 </div>
             `;
@@ -1093,7 +1113,6 @@
                 .map(t => {
                     const isIncome = isIncomeType(t.type);
                     const color = isIncome ? 'has-text-success' : 'has-text-danger';
-                    const sign = isIncome ? '+' : '-';
                     const paymentMethod = paymentLabels[t.paymentMethod] ? t.paymentMethod : 'dinheiro';
                     const safeDescription = escapeHTML(t.description);
                     const safeCategory = escapeHTML(t.category);
@@ -1117,13 +1136,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="level-right">
-                                    <div class="level-item">
-                                        <p class="subtitle is-5 ${color} mb-0">
-                                            ${sign} R$ ${t.amount.toFixed(2)}
-                                        </p>
-                                    </div>
-                                </div>
+	                                <div class="level-right">
+	                                    <div class="level-item">
+	                                        <p class="subtitle is-5 ${color} mb-0">
+	                                            ${formatTransactionCurrency(t.amount, isIncome)}
+	                                        </p>
+	                                    </div>
+	                                </div>
                             </div>
                         </div>
                     `;
@@ -1191,6 +1210,7 @@
             }));
 
             const ws = XLSX.utils.json_to_sheet(data);
+            applyExcelCurrencyFormat(ws, 'Valor');
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Transações');
             XLSX.writeFile(wb, `financas_${currentFilter}_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -1222,7 +1242,7 @@
                 t.description,
                 t.category,
                 paymentLabels[t.paymentMethod || 'dinheiro'] || 'Dinheiro',
-                t.amount
+                formatCurrency(t.amount)
             ]);
 
             const csv = [
@@ -1251,9 +1271,9 @@
             const income = filteredTransactions.filter(t => isIncomeType(t.type)).reduce((sum, t) => sum + t.amount, 0);
             const expense = filteredTransactions.filter(t => isExpenseType(t.type)).reduce((sum, t) => sum + t.amount, 0);
 
-            doc.text(`Receitas: R$ ${income.toFixed(2)}`, 14, 48);
-            doc.text(`Despesas: R$ ${expense.toFixed(2)}`, 14, 54);
-            doc.text(`Saldo: R$ ${(income - expense).toFixed(2)}`, 14, 60);
+            doc.text(`Receitas: ${formatCurrency(income)}`, 14, 48);
+            doc.text(`Despesas: ${formatCurrency(expense)}`, 14, 54);
+            doc.text(`Saldo: ${formatCurrency(income - expense)}`, 14, 60);
 
             let y = 75;
             doc.setFontSize(14);
@@ -1266,7 +1286,7 @@
                     doc.addPage();
                     y = 20;
                 }
-                const line = `${t.date} | ${isIncomeType(t.type) ? '+' : '-'}R$ ${t.amount.toFixed(2)} | ${String(t.description || '').slice(0, 80)}`;
+                const line = `${t.date} | ${formatTransactionCurrency(t.amount, isIncomeType(t.type))} | ${String(t.description || '').slice(0, 80)}`;
                 doc.text(line, 14, y);
                 y += 7;
             });
@@ -1593,22 +1613,111 @@
                 .toLowerCase();
         }
 
+        function bindAmountInput(input) {
+            if (!input) return;
+
+            input.addEventListener('blur', () => {
+                const amount = parseAmount(input.value);
+                if (Number.isFinite(amount) && amount > 0) {
+                    input.value = formatAmountInput(amount);
+                }
+            });
+
+            input.addEventListener('focus', () => {
+                input.select();
+            });
+        }
+
+        function formatCurrency(value, options = {}) {
+            const amount = Number(value);
+            const formatter = options.short ? BRL_SHORT_FORMATTER : BRL_FORMATTER;
+            const safeAmount = Number.isFinite(amount) ? amount : 0;
+
+            return formatter.format(safeAmount).replace(/\u00a0/g, ' ');
+        }
+
+        function formatSignedCurrency(value, options = {}) {
+            const amount = Number(value);
+            if (!Number.isFinite(amount) || amount === 0) {
+                return formatCurrency(0, options);
+            }
+
+            const sign = amount > 0 ? '+' : '-';
+            return `${sign}${formatCurrency(Math.abs(amount), options)}`;
+        }
+
+        function formatTransactionCurrency(value, isIncome, options = {}) {
+            const sign = isIncome ? '+' : '-';
+            return `${sign} ${formatCurrency(Math.abs(Number(value) || 0), options)}`;
+        }
+
+        function formatAmountInput(value) {
+            const amount = Number(value);
+            const safeAmount = Number.isFinite(amount) ? amount : 0;
+
+            return BRL_INPUT_FORMATTER.format(safeAmount);
+        }
+
+        function applyExcelCurrencyFormat(ws, headerName) {
+            if (!ws['!ref'] || !window.XLSX) return;
+
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            let targetColumn = -1;
+
+            for (let column = range.s.c; column <= range.e.c; column++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: column });
+                if (ws[cellAddress]?.v === headerName) {
+                    targetColumn = column;
+                    break;
+                }
+            }
+
+            if (targetColumn === -1) return;
+
+            for (let row = range.s.r + 1; row <= range.e.r; row++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: row, c: targetColumn });
+                if (ws[cellAddress]) {
+                    ws[cellAddress].t = 'n';
+                    ws[cellAddress].z = '"R$" #,##0.00';
+                }
+            }
+        }
+
         function parseAmount(value) {
             if (typeof value === 'number') return value;
 
             const text = String(value ?? '')
                 .trim()
-                .replace(/[Rr$\s]/g, '');
+                .replace(/\u00a0/g, ' ')
+                .replace(/[^\d,.-]/g, '');
 
-            if (text.includes(',') && text.includes('.')) {
-                return parseFloat(text.replace(/\./g, '').replace(',', '.'));
+            if (!text) return NaN;
+
+            const isNegative = text.includes('-');
+            const unsignedText = text.replace(/-/g, '');
+            const lastComma = unsignedText.lastIndexOf(',');
+            const lastDot = unsignedText.lastIndexOf('.');
+            let normalized = unsignedText;
+
+            if (lastComma !== -1 && lastDot !== -1) {
+                normalized = lastComma > lastDot
+                    ? unsignedText.replace(/\./g, '').replace(',', '.')
+                    : unsignedText.replace(/,/g, '');
+            } else if (lastComma !== -1) {
+                const parts = unsignedText.split(',');
+                const decimalPart = parts[parts.length - 1];
+                normalized = parts.length > 2 || decimalPart.length === 3
+                    ? unsignedText.replace(/,/g, '')
+                    : unsignedText.replace(',', '.');
+            } else if (lastDot !== -1) {
+                const parts = unsignedText.split('.');
+                const decimalPart = parts[parts.length - 1];
+                normalized = parts.length > 2 || decimalPart.length === 3
+                    ? unsignedText.replace(/\./g, '')
+                    : unsignedText;
             }
 
-            if (text.includes(',')) {
-                return parseFloat(text.replace(',', '.'));
-            }
-
-            return parseFloat(text);
+            return parseFloat(`${isNegative ? '-' : ''}${normalized}`);
         }
 
         function downloadFile(content, mimeType, filename) {

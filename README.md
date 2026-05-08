@@ -1,12 +1,21 @@
-# FinanceAI - Gestão Financeira
+# FinanceAI - Gestão Financeira V4
 
 Aplicação web estática para controle financeiro local. O sistema permite cadastrar receitas e despesas, filtrar transações, visualizar resumo financeiro, acompanhar calendário, exportar relatórios e manter backup dos dados.
+
+A V4 usa um visual de dashboard financeiro em tons pastel mais vivos e padroniza valores no formato brasileiro, como `R$ 1.234,56`.
 
 ## Como Usar
 
 Abra o arquivo `index.html` diretamente no navegador.
 
 Não é necessário instalar dependências, rodar servidor ou configurar banco de dados. Os dados ficam salvos no `localStorage` do navegador.
+
+## Valores em Real Brasileiro
+
+- Os totais, gráficos, calendário, relatórios e comparações usam `R$` no padrão `pt-BR`.
+- Os campos de valor aceitam entradas como `1234,56`, `1.234,56` e `R$ 1.234,56`.
+- Ao sair do campo, o valor é normalizado para o formato brasileiro com duas casas decimais.
+- CSV e PDF exportam valores formatados em Real. Excel mantém o valor numérico com formatação monetária.
 
 ## Recursos
 
@@ -21,6 +30,7 @@ Não é necessário instalar dependências, rodar servidor ou configurar banco d
 - Exportação para JSON, Excel, CSV e PDF.
 - Importação de JSON, Excel e CSV.
 - Proteção contra fechamento com backup pendente.
+- Interface responsiva com sidebar, cards de KPIs, estados de foco e paleta pastel.
 
 ## Backup e Fechamento Seguro
 
@@ -53,10 +63,21 @@ O projeto usa bibliotecas externas carregadas por CDN:
 - SheetJS/XLSX
 - jsPDF
 
+## Verificação Técnica
+
+Como o app é estático, a validação principal é abrir `index.html` no navegador e testar cadastro, edição, filtros e exportações.
+
+Checagens rápidas usadas no desenvolvimento:
+
+```bash
+node --check script.js
+git diff --check
+```
+
 ## Cuidados
 
 - Limpar os dados do navegador pode apagar as transações.
 - Trocar de navegador ou computador não leva os dados junto automaticamente.
 - Faça backup JSON regularmente para preservar as informações.
 - Arquivos importados precisam ter dados válidos de data, descrição, valor, tipo e categoria.
-
+- Em importações CSV, mantenha a coluna `Valor` no formato numérico ou brasileiro para evitar linhas ignoradas.
